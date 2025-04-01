@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>纪念日倒计时</title>
+    <title>纪念日</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=ZCOOL+XiaoWei&family=ZCOOL+QingKe+HuangYou&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Long+Cang&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,7 +13,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans SC', sans-serif;
             background-color: #FFF0F5;
             min-height: 100vh;
         }
@@ -64,15 +65,30 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             position: relative;
             transition: transform 0.2s;
+            min-height: 200px;
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+        }
+
+        .event-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1;
+        }
+
+        .event-card > * {
+            position: relative;
+            z-index: 2;
         }
 
         .event-card:hover {
             transform: translateY(-5px);
-        }
-
-        .event-card h3 {
-            color: #FF69B4;
-            margin-bottom: 0.5rem;
         }
 
         .delete-btn {
@@ -82,9 +98,10 @@
             background: none;
             border: none;
             font-size: 1.2rem;
-            color: #999;
+            color: #fff;
             cursor: pointer;
             padding: 0.2rem 0.5rem;
+            z-index: 3;
         }
 
         .delete-btn:hover {
@@ -110,6 +127,8 @@
             border-radius: 10px;
             width: 90%;
             max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .form-group {
@@ -123,12 +142,41 @@
             font-weight: bold;
         }
 
-        .form-group input {
+        .form-group input:not([type="file"]):not([type="checkbox"]),
+        .form-group select {
             width: 100%;
             padding: 0.5rem;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 1rem;
+        }
+
+        .preview-container {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .preview-text {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        .image-upload {
+            margin-top: 1rem;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            height: 100px;
+            object-fit: cover;
+            margin-top: 0.5rem;
+            border-radius: 5px;
+            display: none;
         }
 
         .form-buttons {
@@ -155,25 +203,17 @@
             background-color: #ddd;
         }
 
-        .countdown-detail {
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-            color: #FF69B4;
-        }
+        /* 字体样式 */
+        .font-default { font-family: 'Noto Sans SC', sans-serif; }
+        .font-elegant { font-family: 'ZCOOL XiaoWei', serif; }
+        .font-cute { font-family: 'Ma Shan Zheng', cursive; }
+        .font-modern { font-family: 'ZCOOL QingKe HuangYou', cursive; }
+        .font-artistic { font-family: 'Zhi Mang Xing', cursive; }
+        .font-classic { font-family: 'Long Cang', cursive; }
 
-        .form-group.checkbox {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .form-group.checkbox input {
-            width: auto;
-        }
-
-        .time-input {
-            margin-top: 0.5rem;
-        }
+        .font-size-small { font-size: 0.9rem; }
+        .font-size-medium { font-size: 1.1rem; }
+        .font-size-large { font-size: 1.3rem; }
 
         @media (max-width: 600px) {
             .events-grid {
@@ -184,7 +224,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>💕 纪念日倒计时 💕</h1>
+        <h1>✨ 纪念日 ✨</h1>
         <button class="add-button" onclick="showModal()">添加纪念日</button>
     </div>
 
@@ -207,9 +247,41 @@
                 <label for="eventTime">时间：</label>
                 <input type="time" id="eventTime" value="00:00">
             </div>
+            <div class="form-group">
+                <label for="eventFont">字体样式：</label>
+                <select id="eventFont" onchange="updatePreview()">
+                    <option value="font-default">默认字体</option>
+                    <option value="font-elegant">优雅字体</option>
+                    <option value="font-cute">可爱字体</option>
+                    <option value="font-modern">现代字体</option>
+                    <option value="font-artistic">艺术字体</option>
+                    <option value="font-classic">古典字体</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fontSize">字体大小：</label>
+                <select id="fontSize" onchange="updatePreview()">
+                    <option value="font-size-small">小</option>
+                    <option value="font-size-medium" selected>中</option>
+                    <option value="font-size-large">大</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fontColor">字体颜色：</label>
+                <input type="color" id="fontColor" value="#FFFFFF" onchange="updatePreview()">
+            </div>
             <div class="form-group checkbox">
                 <input type="checkbox" id="showDetailedCountdown">
                 <label for="showDetailedCountdown">显示精确倒计时</label>
+            </div>
+            <div class="form-group image-upload">
+                <label for="eventImage">背景图片：</label>
+                <input type="file" id="eventImage" accept="image/*" onchange="previewImage(this)">
+                <img id="imagePreview" class="preview-image">
+            </div>
+            <div class="preview-container">
+                <h3 style="margin-bottom: 0.5rem;">预览效果：</h3>
+                <div id="previewText" class="preview-text">预览文本</div>
             </div>
             <div class="form-buttons">
                 <button class="cancel-btn" onclick="hideModal()">取消</button>
@@ -221,8 +293,34 @@
     <script>
         let events = JSON.parse(localStorage.getItem('anniversaryEvents')) || [];
 
+        function updatePreview() {
+            const previewText = document.getElementById('previewText');
+            const fontStyle = document.getElementById('eventFont').value;
+            const fontSize = document.getElementById('fontSize').value;
+            const fontColor = document.getElementById('fontColor').value;
+            const title = document.getElementById('eventTitle').value || '预览文本';
+
+            previewText.className = `preview-text ${fontStyle} ${fontSize}`;
+            previewText.style.color = fontColor;
+            previewText.textContent = title;
+        }
+
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.style.display = 'block';
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         function showModal() {
             document.getElementById('modal').style.display = 'flex';
+            document.getElementById('imagePreview').style.display = 'none';
+            updatePreview();
         }
 
         function hideModal() {
@@ -231,6 +329,11 @@
             document.getElementById('eventDate').value = '';
             document.getElementById('eventTime').value = '00:00';
             document.getElementById('showDetailedCountdown').checked = false;
+            document.getElementById('eventImage').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('eventFont').value = 'font-default';
+            document.getElementById('fontSize').value = 'font-size-medium';
+            document.getElementById('fontColor').value = '#FFFFFF';
         }
 
         function calculateDaysLeft(date) {
@@ -264,6 +367,9 @@
             const date = document.getElementById('eventDate').value;
             const time = document.getElementById('eventTime').value;
             const showDetailed = document.getElementById('showDetailedCountdown').checked;
+            const fontStyle = document.getElementById('eventFont').value;
+            const fontSize = document.getElementById('fontSize').value;
+            const fontColor = document.getElementById('fontColor').value;
 
             if (title && date) {
                 const newEvent = {
@@ -271,7 +377,11 @@
                     title: title,
                     date: date,
                     time: time,
-                    showDetailed: showDetailed
+                    showDetailed: showDetailed,
+                    background: document.getElementById('imagePreview').src || null,
+                    fontStyle: fontStyle,
+                    fontSize: fontSize,
+                    fontColor: fontColor
                 };
 
                 events.push(newEvent);
@@ -307,8 +417,12 @@
             events.forEach(event => {
                 const daysLeft = calculateDaysLeft(event.date);
                 const card = document.createElement('div');
-                card.className = 'event-card';
+                card.className = `event-card ${event.fontStyle || 'font-default'} ${event.fontSize || 'font-size-medium'}`;
                 
+                if (event.background) {
+                    card.style.backgroundImage = `url(${event.background})`;
+                }
+
                 let daysMessage;
                 if (daysLeft > 0) {
                     daysMessage = `还有 ${daysLeft} 天`;
@@ -320,15 +434,15 @@
 
                 card.innerHTML = `
                     <button class="delete-btn" onclick="deleteEvent(${event.id})">×</button>
-                    <h3>${event.title}</h3>
-                    <p style="color: #666; margin-bottom: 0.5rem;">
+                    <h3 style="color: ${event.fontColor || '#fff'}">${event.title}</h3>
+                    <p style="color: ${event.fontColor || '#fff'}; margin-bottom: 0.5rem;">
                         ${new Date(event.date + 'T' + event.time).toLocaleString()}
                     </p>
-                    <p style="color: #FF69B4; font-weight: bold;">
+                    <p style="color: ${event.fontColor || '#fff'}; font-weight: bold;">
                         ${daysMessage}
                     </p>
                     ${event.showDetailed ? `
-                        <div class="countdown-detail" id="countdown-${event.id}">
+                        <div class="countdown-detail" id="countdown-${event.id}" style="color: ${event.fontColor || '#fff'}">
                             加载中...
                         </div>
                     ` : ''}
