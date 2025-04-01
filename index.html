@@ -203,7 +203,6 @@
             background-color: #ddd;
         }
 
-        /* 字体样式 */
         .font-default { font-family: 'Noto Sans SC', sans-serif; }
         .font-elegant { font-family: 'ZCOOL XiaoWei', serif; }
         .font-cute { font-family: 'Ma Shan Zheng', cursive; }
@@ -291,7 +290,42 @@
     </div>
 
     <script>
-        let events = JSON.parse(localStorage.getItem('anniversaryEvents')) || [];
+        let events = [];
+
+        // 加载保存的数据
+        function loadEvents() {
+            try {
+                const savedEvents = localStorage.getItem('anniversaryEvents');
+                if (savedEvents) {
+                    events = JSON.parse(savedEvents);
+                    console.log('加载数据成功:', events);
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                events = [];
+            }
+            renderEvents();
+        }
+
+        // 保存数据
+        function saveEvents() {
+            try {
+                localStorage.setItem('anniversaryEvents', JSON.stringify(events));
+                console.log('保存数据成功');
+            } catch (error) {
+                console.error('保存数据失败:', error);
+                alert('保存失败，请检查浏览器存储空间');
+            }
+        }
+
+        // 页面加载时初始化数据
+        window.addEventListener('load', function() {
+            loadEvents();
+            console.log('页面加载完成，数据已初始化');
+        });
+
+        // 定期检查数据
+        setInterval(loadEvents, 1000);
 
         function updatePreview() {
             const previewText = document.getElementById('previewText');
@@ -372,33 +406,43 @@
             const fontColor = document.getElementById('fontColor').value;
 
             if (title && date) {
-                const newEvent = {
-                    id: Date.now(),
-                    title: title,
-                    date: date,
-                    time: time,
-                    showDetailed: showDetailed,
-                    background: document.getElementById('imagePreview').src || null,
-                    fontStyle: fontStyle,
-                    fontSize: fontSize,
-                    fontColor: fontColor
-                };
+                try {
+                    const newEvent = {
+                        id: Date.now(),
+                        title: title,
+                        date: date,
+                        time: time,
+                        showDetailed: showDetailed,
+                        background: document.getElementById('imagePreview').src || null,
+                        fontStyle: fontStyle,
+                        fontSize: fontSize,
+                        fontColor: fontColor
+                    };
 
-                events.push(newEvent);
-                saveEvents();
-                renderEvents();
-                hideModal();
+                    events.push(newEvent);
+                    saveEvents();
+                    renderEvents();
+                    hideModal();
+                    
+                    // 添加成功提示
+                    alert('添加成功！');
+                } catch (error) {
+                    console.error('添加事件失败:', error);
+                    alert('添加失败，请重试');
+                }
             }
         }
 
         function deleteEvent(id) {
-            events = events.filter(event => event.id !== id);
-            saveEvents();
-            renderEvents();
-        }
-
-        function saveEvents() {
-            localStorage.setItem('anniversaryEvents', JSON.stringify(events));
+            try {
+                events = events.filter(event => event.id !== id);
+                saveEvents();
+                renderEvents();
+                alert('删除成功！');
+            } catch (error) {
+                console.error('删除事件失败:', error);
+                alert('删除失败，请重试');
+            }
         }
 
         function updateDetailedCountdown(event) {
@@ -409,52 +453,66 @@
         }
 
         function renderEvents() {
-            const container = document.getElementById('eventsContainer');
-            container.innerHTML = '';
+            try {
+                const container = document.getElementById('eventsContainer');
+                if (!container) {
+                    console.error('找不到容器元素');
+                    return;
+                }
+                container.innerHTML = '';
 
-            events.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            events.forEach(event => {
-                const daysLeft = calculateDaysLeft(event.date);
-                const card = document.createElement('div');
-                card.className = `event-card ${event.fontStyle || 'font-default'} ${event.fontSize || 'font-size-medium'}`;
-                
-                if (event.background) {
-                    card.style.backgroundImage = `url(${event.background})`;
+                if (!Array.isArray(events)) {
+                    console.error('events 不是数组:', events);
+                    events = [];
+                    return;
                 }
 
-                let daysMessage;
-                if (daysLeft > 0) {
-                    daysMessage = `还有 ${daysLeft} 天`;
-                } else if (daysLeft === 0) {
-                    daysMessage = '就是今天！';
-                } else {
-                    daysMessage = `已经过去 ${Math.abs(daysLeft)} 天`;
-                }
+                events.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                card.innerHTML = `
-                    <button class="delete-btn" onclick="deleteEvent(${event.id})">×</button>
-                    <h3 style="color: ${event.fontColor || '#fff'}">${event.title}</h3>
-                    <p style="color: ${event.fontColor || '#fff'}; margin-bottom: 0.5rem;">
-                        ${new Date(event.date + 'T' + event.time).toLocaleString()}
-                    </p>
-                    <p style="color: ${event.fontColor || '#fff'}; font-weight: bold;">
-                        ${daysMessage}
-                    </p>
-                    ${event.showDetailed ? `
-                        <div class="countdown-detail" id="countdown-${event.id}" style="color: ${event.fontColor || '#fff'}">
-                            加载中...
-                        </div>
-                    ` : ''}
-                `;
+                events.forEach(event => {
+                    const daysLeft = calculateDaysLeft(event.date);
+                    const card = document.createElement('div');
+                    card.className = `event-card ${event.fontStyle || 'font-default'} ${event.fontSize || 'font-size-medium'}`;
+                    
+                    if (event.background) {
+                        card.style.backgroundImage = `url(${event.background})`;
+                    }
 
-                container.appendChild(card);
+                    let daysMessage;
+                    if (daysLeft > 0) {
+                        daysMessage = `还有 ${daysLeft} 天`;
+                    } else if (daysLeft === 0) {
+                        daysMessage = '就是今天！';
+                    } else {
+                        daysMessage = `已经过去 ${Math.abs(daysLeft)} 天`;
+                    }
 
-                if (event.showDetailed) {
-                    updateDetailedCountdown(event);
-                    setInterval(() => updateDetailedCountdown(event), 1000);
-                }
-            });
+                    card.innerHTML = `
+                        <button class="delete-btn" onclick="deleteEvent(${event.id})">×</button>
+                        <h3 style="color: ${event.fontColor || '#fff'}">${event.title}</h3>
+                        <p style="color: ${event.fontColor || '#fff'}; margin-bottom: 0.5rem;">
+                            ${new Date(event.date + 'T' + event.time).toLocaleString()}
+                        </p>
+                        <p style="color: ${event.fontColor || '#fff'}; font-weight: bold;">
+                            ${daysMessage}
+                        </p>
+                        ${event.showDetailed ? `
+                            <div class="countdown-detail" id="countdown-${event.id}" style="color: ${event.fontColor || '#fff'}">
+                                加载中...
+                            </div>
+                        ` : ''}
+                    `;
+
+                    container.appendChild(card);
+
+                    if (event.showDetailed) {
+                        updateDetailedCountdown(event);
+                        setInterval(() => updateDetailedCountdown(event), 1000);
+                    }
+                });
+            } catch (error) {
+                console.error('渲染事件失败:', error);
+            }
         }
 
         renderEvents();
