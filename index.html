@@ -104,6 +104,23 @@
             z-index: 3;
         }
 
+        .edit-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 2.5rem;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #fff;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            z-index: 3;
+        }
+
+        .edit-btn:hover {
+            color: #ffeb3b;
+        }
+
         .delete-btn:hover {
             color: #ff4444;
         }
@@ -233,7 +250,7 @@
 
     <div class="modal" id="modal">
         <div class="modal-content">
-            <h2 style="color: #FF69B4; margin-bottom: 1.5rem;">添加新的纪念日</h2>
+            <h2 style="color: #FF69B4; margin-bottom: 1.5rem;" id="modalTitle">添加新的纪念日</h2>
             <div class="form-group">
                 <label for="eventTitle">标题：</label>
                 <input type="text" id="eventTitle" required>
@@ -291,6 +308,7 @@
 
     <script>
         let events = [];
+        let currentEditingId = null;
 
         // 加载保存的数据
         function loadEvents() {
@@ -327,6 +345,37 @@
         // 定期检查数据
         setInterval(loadEvents, 1000);
 
+        function editEvent(id) {
+            currentEditingId = id;
+            const event = events.find(e => e.id === id);
+            if (event) {
+                // 更新模态框标题
+                document.getElementById('modalTitle').textContent = '编辑纪念日';
+                
+                // 填充表单数据
+                document.getElementById('eventTitle').value = event.title;
+                document.getElementById('eventDate').value = event.date;
+                document.getElementById('eventTime').value = event.time;
+                document.getElementById('showDetailedCountdown').checked = event.showDetailed;
+                document.getElementById('eventFont').value = event.fontStyle || 'font-default';
+                document.getElementById('fontSize').value = event.fontSize || 'font-size-medium';
+                document.getElementById('fontColor').value = event.fontColor || '#FFFFFF';
+                
+                // 如果有背景图片，显示预览
+                if (event.background) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.style.display = 'block';
+                    preview.src = event.background;
+                }
+                
+                // 更新预览
+                updatePreview();
+                
+                // 显示模态框
+                showModal();
+            }
+        }
+
         function updatePreview() {
             const previewText = document.getElementById('previewText');
             const fontStyle = document.getElementById('eventFont').value;
@@ -359,6 +408,7 @@
 
         function hideModal() {
             document.getElementById('modal').style.display = 'none';
+            document.getElementById('modalTitle').textContent = '添加新的纪念日';
             document.getElementById('eventTitle').value = '';
             document.getElementById('eventDate').value = '';
             document.getElementById('eventTime').value = '00:00';
@@ -368,6 +418,7 @@
             document.getElementById('eventFont').value = 'font-default';
             document.getElementById('fontSize').value = 'font-size-medium';
             document.getElementById('fontColor').value = '#FFFFFF';
+            currentEditingId = null;
         }
 
         function calculateDaysLeft(date) {
@@ -408,7 +459,7 @@
             if (title && date) {
                 try {
                     const newEvent = {
-                        id: Date.now(),
+                        id: currentEditingId || Date.now(),
                         title: title,
                         date: date,
                         time: time,
@@ -419,16 +470,25 @@
                         fontColor: fontColor
                     };
 
-                    events.push(newEvent);
+                    if (currentEditingId) {
+                        // 编辑现有事件
+                        const index = events.findIndex(e => e.id === currentEditingId);
+                        if (index !== -1) {
+                            events[index] = newEvent;
+                            alert('更新成功！');
+                        }
+                    } else {
+                        // 添加新事件
+                        events.push(newEvent);
+                        alert('添加成功！');
+                    }
+
                     saveEvents();
                     renderEvents();
                     hideModal();
-                    
-                    // 添加成功提示
-                    alert('添加成功！');
                 } catch (error) {
-                    console.error('添加事件失败:', error);
-                    alert('添加失败，请重试');
+                    console.error('保存事件失败:', error);
+                    alert(currentEditingId ? '更新失败，请重试' : '添加失败，请重试');
                 }
             }
         }
@@ -489,6 +549,7 @@
 
                     card.innerHTML = `
                         <button class="delete-btn" onclick="deleteEvent(${event.id})">×</button>
+                        <button class="edit-btn" onclick="editEvent(${event.id})">✎</button>
                         <h3 style="color: ${event.fontColor || '#fff'}">${event.title}</h3>
                         <p style="color: ${event.fontColor || '#fff'}; margin-bottom: 0.5rem;">
                             ${new Date(event.date + 'T' + event.time).toLocaleString()}
